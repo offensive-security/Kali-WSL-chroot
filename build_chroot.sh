@@ -25,7 +25,7 @@ mount -o bind /dev/pts kali-root/dev/pts
 cat << EOF > kali-root/second-stage
 #!/bin/bash
 apt-get update
-apt-get --yes --force-yes install locales-all mlocate sudo
+apt-get --yes --force-yes install locales-all mlocate sudo net-tools wget
 #apt-get --yes --force-yes install kali-desktop-xfce xorg xrdp
 rm -rf /root/.bash_history
 apt-get clean
@@ -44,15 +44,69 @@ echo "[*] Executing second stage"
 chmod +x kali-root/second-stage
 LANG=C chroot kali-root /second-stage
 
-sed -i 's/port=3389/port=3390/g' kali-root/etc/xrdp/xrdp.ini
+#sed -i 's/port=3389/port=3390/g' kali-root/etc/xrdp/xrdp.ini
 
 echo "[*] Unmounting stuff"
 
 umount kali-root/dev/pts
-umount kali-root/dev/
+sleep 3
+umount kali-root/dev
+sleep 10
 umount kali-root/proc
+sleep 5
 
-echo "[*]Compressing chroot to install.tar.gz"
 
-cd kali-root
-tar czf ../install.tar.gz *
+# cd kali-root
+
+rm -rf kali-root/second-stage
+rm -rf kali-root/etc/resolv.conf
+cat <<EOF > kali-root/etc/apt/sources.list
+
+deb http://http.kali.org/kali kali-rolling main non-free contrib
+#deb-src http://http.kali.org/kali kali-rolling main non-free contrib
+EOF
+
+
+
+cat <<EOF > kali-root/etc/profile
+# /etc/profile: system-wide .profile file for the Bourne shell (sh(1))
+# and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+
+IS_WSL=`grep -i microsoft /proc/version` # WSL already sets PATH, shouldn't be overridden
+if test "$IS_WSL" = ""; then
+  if [ "`id -u`" -eq 0 ]; then
+    PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  else
+    PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"
+  fi
+fi
+export PATH
+
+if [ "${PS1-}" ]; then
+  if [ "${BASH-}" ] && [ "$BASH" != "/bin/sh" ]; then
+    # The file bash.bashrc already sets the default PS1.
+    # PS1='\h:\w\$ '
+    if [ -f /etc/bash.bashrc ]; then
+      . /etc/bash.bashrc
+    fi
+  else
+    if [ "`id -u`" -eq 0 ]; then
+      PS1='# '
+    else
+      PS1='$ '
+    fi
+  fi
+fi
+
+if [ -d /etc/profile.d ]; then
+  for i in /etc/profile.d/*.sh; do
+    if [ -r $i ]; then
+      . $i
+    fi
+  done
+  unset i
+fi
+EOF
+
+echo "[*] Compressing chroot to install.tar.gz"
+echo "cd kali-root; tar czf ../install.tar.gz *"

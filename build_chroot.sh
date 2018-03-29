@@ -25,7 +25,7 @@ mount -o bind /dev/pts kali-root/dev/pts
 cat << EOF > kali-root/second-stage
 #!/bin/bash
 apt-get update
-apt-get --yes --force-yes install locales-all mlocate sudo net-tools wget
+apt-get --yes --force-yes install locales-all mlocate sudo net-tools wget host dnsutils whois curl
 #apt-get --yes --force-yes install kali-desktop-xfce xorg xrdp
 rm -rf /root/.bash_history
 apt-get clean

@@ -1,2 +1,1 @@
-# Kali-WSL-chroot
-Kali Linux Windows App for WSL chroot builder script.
+New repo can be found here: https://gitlab.com/kalilinux/build-scripts/kali-wsl-chroot
